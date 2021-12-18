@@ -9,8 +9,6 @@ import (
 	"image/png"
 	"log"
 	"os"
-
-	"gonum.org/v1/gonum/spatial/r3"
 )
 
 var (
@@ -118,7 +116,7 @@ func (pi palimg) At(x, y int) color.Color {
 	return pi.cpal[x/pi.size]
 }
 
-func toFloat(c color.Color) r3.Vec {
+func toFloat(c color.Color) Vec {
 	r, g, b, _ := c.RGBA()
-	return r3.Vec{X: float64(r) / float64(maxColor), Y: float64(g) / float64(maxColor), Z: float64(b) / float64(maxColor)}
+	return Vec{X: float64(r) / float64(maxColor), Y: float64(g) / float64(maxColor), Z: float64(b) / float64(maxColor)}
 }

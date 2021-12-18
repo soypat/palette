@@ -4,8 +4,6 @@ import (
 	"image"
 	"image/color"
 	"sort"
-
-	"gonum.org/v1/gonum/spatial/r3"
 )
 
 func autoPalette(im image.Image) color.Palette {
@@ -25,7 +23,7 @@ func autoPalette(im image.Image) color.Palette {
 }
 
 type ByDirection struct {
-	midpoint, vdir r3.Vec
+	midpoint, vdir Vec
 	cpal           color.Palette
 }
 
@@ -33,19 +31,19 @@ type ByDirection struct {
 func (h ByDirection) Len() int {
 	n := len(h.cpal)
 	// First find color center of gravity or midpoint.
-	var midpoint r3.Vec
+	var midpoint Vec
 	for i := range h.cpal {
 		v := h.Vec(i)
-		midpoint = r3.Add(v, midpoint)
+		midpoint = Add(v, midpoint)
 	}
-	h.midpoint = r3.Scale(1/float64(n), midpoint)
+	h.midpoint = Scale(1/float64(n), midpoint)
 
 	// Next find principal direction.
 	var maxDist float64
 	for i := range h.cpal {
 		v := h.Vec(i)
-		vdir := r3.Sub(v, midpoint)
-		vnorm := r3.Norm(vdir)
+		vdir := Sub(v, midpoint)
+		vnorm := Norm(vdir)
 		if vnorm > maxDist {
 			maxDist = vnorm
 			h.vdir = vdir
@@ -71,8 +69,8 @@ func (h ByDirection) Len() int {
 // See Float64Slice.Less for a correct implementation for floating-point values.
 func (h ByDirection) Less(i, j int) bool {
 	v1, v2 := h.Vec(i), h.Vec(j)
-	a := r3.Dot(r3.Sub(v1, h.midpoint), h.vdir)
-	b := r3.Dot(r3.Sub(v2, h.midpoint), h.vdir)
+	a := Dot(Sub(v1, h.midpoint), h.vdir)
+	b := Dot(Sub(v2, h.midpoint), h.vdir)
 	return a < b
 }
 
@@ -81,7 +79,7 @@ func (h ByDirection) Swap(i, j int) {
 	h.cpal[i], h.cpal[j] = h.cpal[j], h.cpal[i]
 }
 
-func (h ByDirection) Vec(i int) r3.Vec {
+func (h ByDirection) Vec(i int) Vec {
 	r, g, b, _ := h.cpal[i].RGBA()
-	return r3.Vec{X: float64(r), Y: float64(g), Z: float64(b)}
+	return Vec{X: float64(r), Y: float64(g), Z: float64(b)}
 }
