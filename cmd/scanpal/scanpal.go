@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	target = flag.String("target", "", "file target expect png.")
-	dir    = flag.String("spectrum", "x", "For color scales. Set to color scale direction. Expects 'x' or 'y'. If none provided will try naively generating pallete.")
+	target    = flag.String("target", "", "file target expect png.")
+	dir       = flag.String("spectrum", "x", "For color scales. Set to color scale direction. Expects 'x' or 'y'. If none provided will try naively generating pallete with whole image.")
+	palfilter = flag.Float64("cthreshold", 0.2, "filter out less dense colors in image")
 )
 
 const (
@@ -56,43 +57,25 @@ func main() {
 }
 
 func xPalette(im image.Image) color.Palette {
+	buckets := NewBucket()
 	rect := im.Bounds()
 	y := (rect.Max.Y - rect.Min.Y) / 2
-	buckets := make(map[uint8]struct{})
-	var cpal color.Palette
 	for x := rect.Min.X; x < rect.Max.X; x++ {
-		rbig, gbig, bbig, abig := im.At(x, y).RGBA()
-		if abig != maxColor {
-			// skip transparent pixels
-			continue
-		}
-		col := compress8(rbig, gbig, bbig)
-		if _, ok := buckets[col]; !ok {
-			buckets[col] = struct{}{}
-			cpal = append(cpal, color.RGBA64{R: uint16(rbig), G: uint16(gbig), B: uint16(bbig), A: maxColor})
-		}
+		buckets.Add(im.At(x, y))
 	}
-	return cpal
+	buckets.Filter(*palfilter)
+	return buckets.Palette()
 }
 
 func yPalette(im image.Image) color.Palette {
+	buckets := NewBucket()
 	rect := im.Bounds()
 	x := (rect.Max.X - rect.Min.X) / 2
-	buckets := make(map[uint8]struct{})
-	var cpal color.Palette
 	for y := rect.Min.Y; y < rect.Max.Y; y++ {
-		rbig, gbig, bbig, abig := im.At(x, y).RGBA()
-		if abig != maxColor {
-			// skip transparent pixels
-			continue
-		}
-		col := compress8(rbig, gbig, bbig)
-		if _, ok := buckets[col]; !ok {
-			buckets[col] = struct{}{}
-			cpal = append(cpal, color.RGBA64{R: uint16(rbig), G: uint16(gbig), B: uint16(bbig), A: maxColor})
-		}
+		buckets.Add(im.At(x, y))
 	}
-	return cpal
+	buckets.Filter(*palfilter)
+	return buckets.Palette()
 }
 
 func savePalette(cpal color.Palette, size int, name string) {
@@ -110,24 +93,6 @@ func savePalette(cpal color.Palette, size int, name string) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func compress8(r, g, b uint32) (eightbitcolor uint8) {
-	rpart := uint8(r>>(imagebits-3)) << 5
-	gpart := uint8(g>>(imagebits-3)) << 2
-	bpart := uint8(b >> (imagebits - 2))
-	return rpart | gpart | bpart
-}
-
-type runningAvg struct {
-	r, g, b, n float64
-}
-
-func (a *runningAvg) update(r, g, b float64) {
-	a.n++ // welfords moving average
-	a.r = a.r + (r-a.r)/a.n
-	a.g = a.g + (g-a.g)/a.n
-	a.b = a.b + (b-a.b)/a.n
 }
 
 type palimg struct {

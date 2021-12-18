@@ -10,29 +10,14 @@ import (
 
 func autoPalette(im image.Image) color.Palette {
 	rect := im.Bounds()
-	buckets := make(map[uint8]runningAvg)
+	buckets := NewBucket()
 	for x := rect.Min.X; x < rect.Max.X; x++ {
 		for y := rect.Min.Y; y < rect.Max.Y; y++ {
-			rbig, gbig, bbig, abig := im.At(x, y).RGBA()
-			if abig != maxColor {
-				// skip transparent pixels
-				continue
-			}
-			col := compress8(rbig, gbig, bbig)
-			got := buckets[col]
-			got.update(float64(rbig), float64(gbig), float64(bbig))
-			buckets[col] = got
+			buckets.Add(im.At(x, y))
 		}
 	}
-	cpal := make(color.Palette, 0, len(buckets))
-	for _, v := range buckets {
-		cpal = append(cpal, color.RGBA64{
-			R: uint16(v.r),
-			G: uint16(v.g),
-			B: uint16(v.b),
-			A: maxColor,
-		})
-	}
+	buckets.Filter(*palfilter)
+	cpal := buckets.Palette()
 	sort.Sort(ByDirection{
 		cpal: cpal,
 	})
@@ -98,5 +83,5 @@ func (h ByDirection) Swap(i, j int) {
 
 func (h ByDirection) Vec(i int) r3.Vec {
 	r, g, b, _ := h.cpal[i].RGBA()
-	return r3.Vec{float64(r), float64(g), float64(b)}
+	return r3.Vec{X: float64(r), Y: float64(g), Z: float64(b)}
 }
