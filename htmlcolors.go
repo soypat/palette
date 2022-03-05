@@ -7,6 +7,11 @@ import (
 // HTML returns one of the predefined HTML colors.
 // If the color is not found it returns black.
 // See https://www.webdevelopersnotes.com/list-of-html-colour-names.
+//
+// HTML expects an exact match with the lower case name, no spaces.
+// To sanitize user input one could do the following:
+//  name := strings.ToLower(strings.ReplaceAll(userInput, " ", ""))
+//  palette.HTML(name)
 func HTML(name string) color.Color {
 	c, ok := html[name]
 	if !ok {
