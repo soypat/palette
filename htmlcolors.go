@@ -4,10 +4,10 @@ import (
 	"image/color"
 )
 
-// FromHTMLName returns one of the predefined HTML colors.
+// HTML returns one of the predefined HTML colors.
 // If the color is not found it returns black.
 // See https://www.webdevelopersnotes.com/list-of-html-colour-names.
-func FromHTMLName(name string) color.Color {
+func HTML(name string) color.Color {
 	c, ok := html[name]
 	if !ok {
 		return color.Black
